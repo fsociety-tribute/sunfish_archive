@@ -1,15 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
+
 #ifndef _MSM_DRM_NOTIFY_H_
 #define _MSM_DRM_NOTIFY_H_
 
@@ -43,6 +36,18 @@ struct msm_drm_notifier {
 	void *data;
 };
 
+#ifdef CONFIG_DRM_MSM
 int msm_drm_register_client(struct notifier_block *nb);
 int msm_drm_unregister_client(struct notifier_block *nb);
+#else
+static inline int msm_drm_register_client(struct notifier_block *nb)
+{
+	return 0;
+}
+
+static inline int msm_drm_unregister_client(struct notifier_block *nb)
+{
+	return 0;
+}
+#endif
 #endif
