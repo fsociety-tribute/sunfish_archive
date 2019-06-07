@@ -2143,7 +2143,6 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 	unsigned long flags;
 	int cpu, success = 0;
 
-	preempt_disable();
 	if (p == current) {
 		/*
 		 * We're waking current, this means 'p->on_rq' and 'task_cpu(p)
@@ -2157,9 +2156,10 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 		 *    it disabling IRQs (this allows not taking ->pi_lock).
 		 */
 		if (!(p->state & state))
-			goto out;
+			return false;
 
 		success = 1;
+		cpu = task_cpu(p);
 		trace_sched_waking(p);
 		p->state = TASK_RUNNING;
 		trace_sched_wakeup(p);
@@ -2204,7 +2204,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 	 * current.
 	 */
 	smp_rmb();
-	if (READ_ONCE(p->on_rq) && ttwu_remote(p, wake_flags))
+	if (p->on_rq && ttwu_remote(p, wake_flags))
 		goto unlock;
 
 #ifdef CONFIG_SMP
@@ -2298,8 +2298,7 @@ unlock:
 	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
 out:
 	if (success)
-		ttwu_stat(p, task_cpu(p), wake_flags);
-	preempt_enable();
+		ttwu_stat(p, cpu, wake_flags);
 
 #ifdef CONFIG_SCHED_WALT
 	if (success && sched_predl) {
