@@ -3767,8 +3767,6 @@ static ssize_t diagchar_read(struct file *file, char __user *buf, size_t count,
 		mutex_lock(&driver->md_session_lock);
 		session_info = diag_md_session_get_peripheral(DIAG_LOCAL_PROC,
 								APPS_DATA);
-		if (!session_info)
-			mutex_unlock(&driver->md_session_lock);
 		COPY_USER_SPACE_OR_ERR(buf, data_type, sizeof(int));
 		if (ret == -EFAULT) {
 			mutex_unlock(&driver->md_session_lock);
@@ -3832,12 +3830,9 @@ static ssize_t diagchar_read(struct file *file, char __user *buf, size_t count,
 		mutex_lock(&driver->md_session_lock);
 		session_info = diag_md_session_get_peripheral(DIAG_LOCAL_PROC,
 								APPS_DATA);
-		if (!session_info)
-			mutex_unlock(&driver->md_session_lock);
 		COPY_USER_SPACE_OR_ERR(buf, data_type, sizeof(int));
 		if (ret == -EFAULT) {
-			if ((session_info))
-				mutex_unlock(&driver->md_session_lock);
+			mutex_unlock(&driver->md_session_lock);
 			goto end;
 		}
 		if (!session_info)
