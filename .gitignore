@@ -132,11 +132,7 @@ kernel/configs/android-*.cfg
 
 # Qualcomm out-of-tree audio drivers
 #/techpack/audio
-
 #
 #Ignoring Android.bp link file
 #
 Android.bp
-
-# Wireguard intermediary build file
-src/wireguard.mod
