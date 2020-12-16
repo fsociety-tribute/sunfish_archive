@@ -137,3 +137,6 @@ kernel/configs/android-*.cfg
 #Ignoring Android.bp link file
 #
 Android.bp
+
+# Wireguard intermediary build file
+src/wireguard.mod
