@@ -487,7 +487,11 @@ void __init arm64_memblock_init(void)
 	 * Save bootloader imposed memory limit before we overwirte
 	 * memblock.
 	 */
-	bootloader_memory_limit = memblock_end_of_DRAM();
+	bootloader_memory_limit = memblock_max_addr(memory_limit);
+	if (bootloader_memory_limit > memblock_end_of_DRAM())
+		bootloader_memory_limit = memblock_end_of_DRAM();
+
+	update_memory_limit();
 
 	/*
 	 * Apply the memory limit if it was set. Since the kernel may be loaded
