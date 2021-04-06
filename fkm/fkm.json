@@ -1,0 +1,13 @@
+{
+  "kernel": {
+    "name": "fsociety tribute kernel",
+    "version": "alpha 1.00",
+    "link": "https://sourceforge.net/projects/fsociety-tribute/files/pixel4a/fsociety%20tribute%20alpha%231.00.zip/download",
+    "changelog_url": "https://github.com/fsociety-tribute/pixel4a/raw/anderson/fkm/changelog",
+    "date": "2021-04-06",
+    "sha1": "3bcaf7bd0e70039249ddc71cb04d2c32f7b0a398"
+  },
+  "support": {
+    "link": "https://t.me/fsociety_tribute_p4a"
+  }
+}
