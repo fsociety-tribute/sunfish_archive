@@ -849,6 +849,8 @@ static ssize_t kgsl_pwrctrl_max_gpuclk_store(struct device *dev,
 
 	if (device == NULL)
 		return 0;
+		
+ 	return count;
 
 	ret = kgsl_sysfs_store(buf, &val);
 	if (ret)
