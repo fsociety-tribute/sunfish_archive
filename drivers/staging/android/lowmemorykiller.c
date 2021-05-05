@@ -82,8 +82,8 @@ module_param_named(enable_lmk, enable_lmk, int, 0644);
 #include "lowmemorykiller_tng.h"
 #endif
 
-static u32 lowmem_debug_level = 0;
-static short lowmem_adj[6] = {
+u32 lowmem_debug_level = 0;
+short lowmem_adj[6] = {
 	0,
 	1,
 	6,
@@ -185,12 +185,8 @@ int adjust_minadj(short *min_score_adj)
 {
 	int ret = VMPRESSURE_NO_ADJUST;
 
-	if (enable_adaptive_lmk != ADAPTIVE_LMK_ENABLED) {
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_TNG
-		balance_cache(pressure);
-#endif
+	if (enable_adaptive_lmk != ADAPTIVE_LMK_ENABLED)
 		return 0;
- 	}
 
 	if (atomic_read(&shift_adj) &&
 	    (*min_score_adj > adj_max_shift)) {
@@ -212,8 +208,12 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	unsigned long pressure = action;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 
-	if (enable_adaptive_lmk != ADAPTIVE_LMK_ENABLED)
+ 	if (enable_adaptive_lmk != ADAPTIVE_LMK_ENABLED) {
+#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_TNG
+		balance_cache(pressure);
+#endif
 		return 0;
+	}
 
 	if (pressure >= 95) {
 		other_file = global_node_page_state(NR_FILE_PAGES) -
@@ -255,7 +255,6 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 		trace_almk_vmpressure(pressure, other_free, other_file);
 		atomic_set(&shift_adj, 0);
 	}
-	
 #ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_TNG
 	balance_cache(pressure);
 #endif
@@ -482,7 +481,7 @@ static int get_minfree_scalefactor(gfp_t gfp_mask)
 	for_each_zone_zonelist(zone, z, zonelist, gfp_zone(gfp_mask))
 		nr_usable += zone->managed_pages;
 
-	return max_t(int, 1, mult_frac(100, nr_usable, totalram_pages));
+ 	return max_t(int, 1, mult_frac(100, nr_usable, totalram_pages));
 }
 
 void mark_lmk_victim(struct task_struct *tsk)
