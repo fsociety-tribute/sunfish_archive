@@ -1,2 +1,0 @@
-knowles,iaxxx-module-celldrv.txt
-Please add descriptions for the properties of the new node.
