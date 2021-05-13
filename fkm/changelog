@@ -1,3 +1,12 @@
-fsociety tribute alpha#1.00
-06/04/2021
-- Initial release
+fsociety tribute
+
+stable#1.50 - 05/13/2021
+
+Thanks to everyone involved in the following changes:
+
+- Full source rebase from scratch
+- sched: fair: Fix load balancing for big tasks
+- msm: ipa: Add an option to allow IPA wakelocks (disabled by default) 
+- msm: ipa_v3: Do not acquire wakelocks 
+- msm: ipa_v3: block ipa_ws wakelocks 
+- blkdev: Set QUEUE_FLAG_NONROT  
