@@ -1,12 +1,26 @@
 fsociety tribute
 
-stable#1.50 - 05/13/2021
+stable#1.65 - 06/12/2021
 
 Thanks to everyone involved in the following changes:
 
-- Full source rebase from scratch
-- sched: fair: Fix load balancing for big tasks
-- msm: ipa: Add an option to allow IPA wakelocks (disabled by default) 
-- msm: ipa_v3: Do not acquire wakelocks 
-- msm: ipa_v3: block ipa_ws wakelocks 
-- blkdev: Set QUEUE_FLAG_NONROT  
+- treewide: Merge tag 'android-11.0.0_r0.85' of https://android.googlesource.com/kernel/msm (June 2021 security patch)
+- Merge fixes from CAF
+- Merge security fixes from GrapheneOS
+- wireguard: Update to version 1.0.20210606
+- Implement josenk's srandom driver (faster than random and urandom - https://github.com/josenk/srandom)
+- Implement zRAM deduplication with arter97's changes
+- mm: compaction: Add automatic compaction mechanism 
+- techpack: audio: Merge last update
+- mbcache: Speed up cache entry creation 
+- msm/sde/rotator: Remove unneeded PM QoS requests
+- drm/msm/sde: Remove unneeded PM QoS requests
+- msm: kgsl: Remove L2PC PM QoS feature
+- scsi: ufs: Add sultanxda's simple IRQ-affined PM QoS operations
+- scsi: ufs: Scrap Qualcomm's PM QoS implementation  
+- qcacld-3.0: use power efficient workingqueue
+- qcacld-3.0: Nuke as much debug bloat as possible
+- qcacmn: Disable all of qdf_trace when WLAN_DEBUG is disabled
+- sched: fair: consider all running tasks in cpu for load balance 
+- cpuidle: don't disable cpuidle when entering suspend
+- defconfig: Disable EDAC
