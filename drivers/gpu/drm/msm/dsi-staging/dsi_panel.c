@@ -2212,6 +2212,14 @@ static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 
 	pr_info("%s: ulps during suspend feature %s", __func__,
 		(panel->ulps_suspend_enabled ? "enabled" : "disabled"));
+		
+	pr_info("%s checking for panel overrides %s\n",__func__, panel->name);
+  /*qcom,dsi-display-list = <&dsi-panel-sofef01-1080p-cmd.dtsi> */
+		if (panel->name && ( strstr(panel->name,"sofef01") )) {
+		pr_info("%s panel override found, setting ulps and supsend ulps from %d %d to 1 1\n",__func__,panel->ulps_feature_enabled, panel->ulps_suspend_enabled);
+		panel->ulps_feature_enabled = true;
+		panel->ulps_suspend_enabled = true;
+	}
 
 	panel->te_using_watchdog_timer = utils->read_bool(utils->data,
 					"qcom,mdss-dsi-te-using-wd");
