@@ -24,8 +24,11 @@
 #include <linux/extcon.h>
 #include <linux/usb/class-dual-role.h>
 #include "storm-watch.h"
-#include "../google/logbuffer.h"
 #include "battery.h"
+
+#if IS_ENABLED(CONFIG_GOOGLE_LOGBUFFER)
+#include "../google/logbuffer.h"
+#endif
 
 enum print_reason {
 	PR_INTERRUPT	= BIT(0),
@@ -642,9 +645,10 @@ struct smb_charger {
 
 	struct regulator *ext_vbus;
 
+#if IS_ENABLED(CONFIG_GOOGLE_LOGBUFFER)
 	/* logging */
 	struct logbuffer *log;
-
+#endif
 	/* lpd timer work */
 	struct workqueue_struct *wq;
 	struct work_struct	lpd_recheck_work;
