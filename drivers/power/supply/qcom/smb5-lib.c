@@ -28,6 +28,7 @@
 #include "storm-watch.h"
 #include "schgm-flash.h"
 
+#if IS_ENABLED(CONFIG_GOOGLE_LOGBUFFER)
 #define smblib_err(chg, fmt, ...)				\
 	logbuffer_log(chg->log, "%s: %s: " fmt,			\
 		      chg->name, __func__, ##__VA_ARGS__)	\
@@ -39,6 +40,14 @@
 				      chg->name, __func__,	\
 				      ##__VA_ARGS__);		\
 	} while (0)
+#else
+#define smblib_err(chg, fmt, ...)		\
+	pr_err("%s: %s: " fmt, chg->name,	\
+		__func__, ##__VA_ARGS__)	\
+
+#define smblib_dbg(chg, reason, fmt, ...)			\
+	do { } while (0)
+#endif
 
 #define typec_rp_med_high(chg, typec_mode)			\
 	((typec_mode == POWER_SUPPLY_TYPEC_SOURCE_MEDIUM	\
