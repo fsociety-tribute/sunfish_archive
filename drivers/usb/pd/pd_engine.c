@@ -2095,7 +2095,7 @@ struct usbpd *usbpd_create(struct device *parent)
 		return ERR_PTR(-ENOMEM);
 
 	pd->log = debugfs_logbuffer_register("usbpd");
-	if (IS_ERR_OR_NULL(pd->log)) {
+ 	if (IS_ERR(pd->log)) {
 		ret = PTR_ERR(pd->log);
 		goto free_pd;
 	}
