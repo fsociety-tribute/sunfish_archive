@@ -1,26 +1,29 @@
 fsociety tribute
 
-stable#1.65 - 06/12/2021
+stable#1.80 - 06/24/2021
 
 Thanks to everyone involved in the following changes:
 
-- treewide: Merge tag 'android-11.0.0_r0.85' of https://android.googlesource.com/kernel/msm (June 2021 security patch)
-- Merge fixes from CAF
-- Merge security fixes from GrapheneOS
-- wireguard: Update to version 1.0.20210606
-- Implement josenk's srandom driver (faster than random and urandom - https://github.com/josenk/srandom)
-- Implement zRAM deduplication with arter97's changes
-- mm: compaction: Add automatic compaction mechanism 
-- techpack: audio: Merge last update
-- mbcache: Speed up cache entry creation 
-- msm/sde/rotator: Remove unneeded PM QoS requests
-- drm/msm/sde: Remove unneeded PM QoS requests
-- msm: kgsl: Remove L2PC PM QoS feature
-- scsi: ufs: Add sultanxda's simple IRQ-affined PM QoS operations
-- scsi: ufs: Scrap Qualcomm's PM QoS implementation  
-- qcacld-3.0: use power efficient workingqueue
-- qcacld-3.0: Nuke as much debug bloat as possible
-- qcacmn: Disable all of qdf_trace when WLAN_DEBUG is disabled
-- sched: fair: consider all running tasks in cpu for load balance 
-- cpuidle: don't disable cpuidle when entering suspend
-- defconfig: Disable EDAC
+- Fix an occasional kernel panic that had been affecting the previous versions
+- Revert "mm: compaction: Add automatic compaction mechanism"
+- Revert "qcacld-3.0: use power efficient workingqueue" (was causing higher idle battery drain due to its conflict with qcom_rx_wakelock disable)
+- Remove USB2 Fast Charge support
+- Add Haptic Feedback level Control w/ FPR Haptic Feedback Control support (thanks to engstk for their original work)
+- dsi: panel: add in-driver ULPS enabling (thanks to tbalden for their original work)
+- gpu: msm: Remove tracing
+- msm: camera: Stub out the camera_debug_util API and compile it out
+- cpuidle: enter_state: Don't needlessly calculate diff time
+- Revert "power: Reduce debug logging if logbuffer is still enabled"
+- defconfig: Disable Google logbuffer
+- defconfig: Set DISABLE_TRACE_PRINTK
+- defconfig: Disable Memory Dump driver
+- defconfig: Disable unnecessary errata 
+- defconfig: Unset a bunch of debugging options 
+- defconfig: Disable some sleep states debugging configs (thanks to Freak07 for their work)
+- qcacmn: Remove leftover debug function 
+- arm64: vdso: Compile vDSO at O3 with Clang
+- arm64: dts: sdmmagpie: Disable debug monitoring
+- arm64: dts: sdmmagpie: Disable expedited RCU grace periods
+- arm64: dts: msm: disable kpti on sdmmagpie
+- arm64/dts: qcom: Disable CoreSight DT entries for sdmmagpie
+- hwtracing: coresight: Add entries from sdmmagpie-coresight
