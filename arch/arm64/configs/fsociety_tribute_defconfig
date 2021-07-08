@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.14.222 Kernel Configuration
+# Linux/arm64 4.14.228 Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -3823,6 +3823,8 @@ CONFIG_HID_PLANTRONICS=y
 # CONFIG_HID_ROCCAT is not set
 # CONFIG_HID_SAITEK is not set
 # CONFIG_HID_SAMSUNG is not set
+CONFIG_HID_PLAYSTATION=y
+CONFIG_PLAYSTATION_FF=y
 CONFIG_HID_SONY=y
 CONFIG_SONY_FF=y
 # CONFIG_HID_SPEEDLINK is not set
