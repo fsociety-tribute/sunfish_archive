@@ -1,29 +1,38 @@
 fsociety tribute
 
-stable#1.80 - 06/24/2021
+stable#1.90 - 07/11/2021
 
 Thanks to everyone involved in the following changes:
 
-- Fix an occasional kernel panic that had been affecting the previous versions
-- Revert "mm: compaction: Add automatic compaction mechanism"
-- Revert "qcacld-3.0: use power efficient workingqueue" (was causing higher idle battery drain due to its conflict with qcom_rx_wakelock disable)
-- Remove USB2 Fast Charge support
-- Add Haptic Feedback level Control w/ FPR Haptic Feedback Control support (thanks to engstk for their original work)
-- dsi: panel: add in-driver ULPS enabling (thanks to tbalden for their original work)
-- gpu: msm: Remove tracing
-- msm: camera: Stub out the camera_debug_util API and compile it out
-- cpuidle: enter_state: Don't needlessly calculate diff time
-- Revert "power: Reduce debug logging if logbuffer is still enabled"
-- defconfig: Disable Google logbuffer
-- defconfig: Set DISABLE_TRACE_PRINTK
-- defconfig: Disable Memory Dump driver
-- defconfig: Disable unnecessary errata 
-- defconfig: Unset a bunch of debugging options 
-- defconfig: Disable some sleep states debugging configs (thanks to Freak07 for their work)
-- qcacmn: Remove leftover debug function 
-- arm64: vdso: Compile vDSO at O3 with Clang
-- arm64: dts: sdmmagpie: Disable debug monitoring
-- arm64: dts: sdmmagpie: Disable expedited RCU grace periods
-- arm64: dts: msm: disable kpti on sdmmagpie
-- arm64/dts: qcom: Disable CoreSight DT entries for sdmmagpie
-- hwtracing: coresight: Add entries from sdmmagpie-coresight
+- Android 12 official support with stock A12 kernel changes
+- Merge branch android-msm-sunfish-4.14-android11-qpr3 (July 2021 security patch - thanks to engstk)
+- Makefile: Prohibit VLA x
+- proc: cmdline: Patch SafetyNet flags (The device passes bootloader SafetyNet check - thanks to sultanxda & kdrag0n)
+- PM: sleep: Don't allow s2idle to be used (enforce the default deep sleep mode because s2idle is buggy - thanks to sultanxda)
+- clk: qcom: gpucc-sdmmagpie: Undervolt the GPU (thanks to lybxlpsv on Github)
+- Revert "defconfig: Enable the BPF JIT compiler" (to fix gaming lag issues) xx
+- Revert "rcu: Speed up calling of RCU tasks callbacks" (it caused kernel panics)
+- Revert "qcacmn: Disable all of qdf_trace when WLAN_DEBUG is disabled"
+- Revert "mm: wakeup kswapd for order-0 allocation" 
+- VFS: use synchronize_rcu_expedited() in namespace_unlock() (statiscally faster filesystem unmounting time)
+- qcacld-3.0: Fix regulatory domain country names. (thanks to kdrag0n)
+- sched: fair: Tune scheduler capacity margins for sm7150-ab (thanks to KenHV on Github) 
+- sched/fair: Revert Google's capacity margin hacks (they aren't needed anymore - thanks to sultanxda)
+- sched/fair: Allow load bigger task load balance when nr_running is 2
+- sched/fair: Optimize test_idle_cores() for !SMT 
+- sched/fair: Fix unnecessary increase of balance interval
+- sched/fair: Trigger asym_packing during idle load balance 
+- sched/fair: Fix rounding bug for asym packing
+- sched/core: Optimize try_to_wake_up() for local wakeups
+- sched/core: Fix preempt warning in ttwu 
+- soc: qcom: watchdog_v2: Fix memory leaks when memory_dump_v2 isn't built (thanks to sultanxda)
+- soc: qcom: Remove tracing (thanks to celtare21 on Github)
+- UPSTREAM: psi: eliminate kthread_worker from psi trigger scheduling mechanism
+- BACKPORT: cgroup: make per-cgroup pressure stall tracking configurable 
+- arm64/dts: sdmmagpie: Disable per cgroup tracking via psi (for less system overhead and better performance - thanks to Freak07)
+
+x This Linux upstream change makes the kernel more secure and less bloated code wise.
+
+More info here: https://www.phoronix.com/vr.php?view=Linux-Kills-The-VLA
+
+xx Enabling the BPJ JIT compiler was supposed to bring better performance, but it had the opposite effect for some games.
