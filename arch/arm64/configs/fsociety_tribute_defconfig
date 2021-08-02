@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.14.228 Kernel Configuration
+# Linux/arm64 4.14.232 Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -769,7 +769,7 @@ CONFIG_XFRM_ALGO=y
 CONFIG_XFRM_USER=y
 CONFIG_XFRM_INTERFACE=y
 # CONFIG_XFRM_SUB_POLICY is not set
-# CONFIG_XFRM_MIGRATE is not set
+CONFIG_XFRM_MIGRATE=y
 CONFIG_XFRM_STATISTICS=y
 CONFIG_XFRM_IPCOMP=y
 CONFIG_NET_KEY=y
