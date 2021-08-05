@@ -1,38 +1,40 @@
 fsociety tribute
 
-stable#1.90 - 07/11/2021
+stable#1.95 - 08/15/2021
 
 Thanks to everyone involved in the following changes:
 
-- Android 12 official support with stock A12 kernel changes
-- Merge branch android-msm-sunfish-4.14-android11-qpr3 (July 2021 security patch - thanks to engstk)
-- Makefile: Prohibit VLA x
-- proc: cmdline: Patch SafetyNet flags (The device passes bootloader SafetyNet check - thanks to sultanxda & kdrag0n)
-- PM: sleep: Don't allow s2idle to be used (enforce the default deep sleep mode because s2idle is buggy - thanks to sultanxda)
-- clk: qcom: gpucc-sdmmagpie: Undervolt the GPU (thanks to lybxlpsv on Github)
-- Revert "defconfig: Enable the BPF JIT compiler" (to fix gaming lag issues) xx
-- Revert "rcu: Speed up calling of RCU tasks callbacks" (it caused kernel panics)
-- Revert "qcacmn: Disable all of qdf_trace when WLAN_DEBUG is disabled"
-- Revert "mm: wakeup kswapd for order-0 allocation" 
-- VFS: use synchronize_rcu_expedited() in namespace_unlock() (statiscally faster filesystem unmounting time)
-- qcacld-3.0: Fix regulatory domain country names. (thanks to kdrag0n)
-- sched: fair: Tune scheduler capacity margins for sm7150-ab (thanks to KenHV on Github) 
-- sched/fair: Revert Google's capacity margin hacks (they aren't needed anymore - thanks to sultanxda)
-- sched/fair: Allow load bigger task load balance when nr_running is 2
-- sched/fair: Optimize test_idle_cores() for !SMT 
-- sched/fair: Fix unnecessary increase of balance interval
-- sched/fair: Trigger asym_packing during idle load balance 
-- sched/fair: Fix rounding bug for asym packing
-- sched/core: Optimize try_to_wake_up() for local wakeups
-- sched/core: Fix preempt warning in ttwu 
-- soc: qcom: watchdog_v2: Fix memory leaks when memory_dump_v2 isn't built (thanks to sultanxda)
-- soc: qcom: Remove tracing (thanks to celtare21 on Github)
-- UPSTREAM: psi: eliminate kthread_worker from psi trigger scheduling mechanism
-- BACKPORT: cgroup: make per-cgroup pressure stall tracking configurable 
-- arm64/dts: sdmmagpie: Disable per cgroup tracking via psi (for less system overhead and better performance - thanks to Freak07)
+- Implement the latest ARM64 architecture patches
+- Merge tag 'android-11.0.0_r0.99' into techpack/audio (Aug. 2021 security patch)
+- Merge tag 'android-msm-4.14-s-beta-3' changes (Android 12 beta 3)
+- defconfig: Properly disable CONFIG_FAIR_GROUP_SCHED (as A12 stock kernel's change)
+- defconfig: Set CONFIG_DISABLE_TRACE_PRINTK (again)
+- Bring back the automatic compaction mechanism implemented in the #1.70 private build
+- mm: compaction: Run ZRAM compaction on automatic compaction
+- Switch back to lz4 zRAM compression algorithm
+- treewide: Suppress overly verbose log spam x
+- thermal: step_wise: Apply some CAF patches
+- drm/msm/dsi-staging: Fix memory leak in drm_panel_get_timings() x
+- cpuidle: lpm-levels: Fix panics when CONFIG_MSM_IDLE_STATS=n x
+- cpuidle: lpm-levels: Allow exit latencies equal to target latencies x
+- drm/msm/sde: Skip unneeded register reads when getting write line count x
+- msm: ipa_v3: Mitigate usleep_range calls
+- Revert "msm: ipa_v3: block ipa_ws wakelocks"
+- Revert "msm: ipa_v3: Do not acquire wakelocks"
+- drivers: ipa_v3: Conditionally compile out ipa wakelock code
+- power/wakelock: Add a timeout to wakelocks globally
+- qcacld-3.0: Do not allow any wakelocks to be held
+- thermal_core: Use power efficient workqueue
+- sched/core: Use SCHED_RR in place of SCHED_FIFO for all users
+- sched/core: Fix rq clock warning in sched_migrate_to_cpumask_end()
+- drm/msm/dsi-staging: Fix transposed panel_switch and panel_post_switch x
+- mailbox/qcom-rpmh: Do not spam logs with busy TCS states
+- power/google: sm7150_bms: Silence logspam when charger is connected
+- gpio: Remove VLA from gpiolib
+- tty: okl4_vtty: remove VLA usage
+- Revert "drm/msm/sde: Wait for ctl_start asynchronously on cmd mode panels" x
+- Revert "pinctrl: msm: Remove explicit barriers from mmio ops where unneeded" x
+- Misc. building changes
 
-x This Linux upstream change makes the kernel more secure and less bloated code wise.
 
-More info here: https://www.phoronix.com/vr.php?view=Linux-Kills-The-VLA
-
-xx Enabling the BPJ JIT compiler was supposed to bring better performance, but it had the opposite effect for some games.
+x Credits go to sultanxda
