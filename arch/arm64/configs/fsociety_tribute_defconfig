@@ -6045,7 +6045,7 @@ CONFIG_QCA_CLD_WLAN_PROFILE="default"
 #
 # fsociety-tribute additions
 #
-CONFIG_LOCALVERSION="-fsociety tribute stable#1.90"
+CONFIG_LOCALVERSION="-fsociety tribute stable#1.95"
 CONFIG_IOSCHED_ZEN=y
 CONFIG_DEFAULT_ZEN=y 
 CONFIG_DEFAULT_IOSCHED="zen"
