@@ -1,40 +1,7 @@
 fsociety tribute
 
-stable#1.95 - 08/15/2021
+stable#1.97 - 08/07/2021
 
-Thanks to everyone involved in the following changes:
-
-- Implement the latest ARM64 architecture patches
-- Merge tag 'android-11.0.0_r0.99' into techpack/audio (Aug. 2021 security patch)
-- Merge tag 'android-msm-4.14-s-beta-3' changes (Android 12 beta 3)
-- defconfig: Properly disable CONFIG_FAIR_GROUP_SCHED (as A12 stock kernel's change)
-- defconfig: Set CONFIG_DISABLE_TRACE_PRINTK (again)
-- Bring back the automatic compaction mechanism implemented in the #1.70 private build
-- mm: compaction: Run ZRAM compaction on automatic compaction
-- Switch back to lz4 zRAM compression algorithm
-- treewide: Suppress overly verbose log spam x
-- thermal: step_wise: Apply some CAF patches
-- drm/msm/dsi-staging: Fix memory leak in drm_panel_get_timings() x
-- cpuidle: lpm-levels: Fix panics when CONFIG_MSM_IDLE_STATS=n x
-- cpuidle: lpm-levels: Allow exit latencies equal to target latencies x
-- drm/msm/sde: Skip unneeded register reads when getting write line count x
-- msm: ipa_v3: Mitigate usleep_range calls
-- Revert "msm: ipa_v3: block ipa_ws wakelocks"
-- Revert "msm: ipa_v3: Do not acquire wakelocks"
-- drivers: ipa_v3: Conditionally compile out ipa wakelock code
-- power/wakelock: Add a timeout to wakelocks globally
-- qcacld-3.0: Do not allow any wakelocks to be held
-- thermal_core: Use power efficient workqueue
-- sched/core: Use SCHED_RR in place of SCHED_FIFO for all users
-- sched/core: Fix rq clock warning in sched_migrate_to_cpumask_end()
-- drm/msm/dsi-staging: Fix transposed panel_switch and panel_post_switch x
-- mailbox/qcom-rpmh: Do not spam logs with busy TCS states
-- power/google: sm7150_bms: Silence logspam when charger is connected
-- gpio: Remove VLA from gpiolib
-- tty: okl4_vtty: remove VLA usage
-- Revert "drm/msm/sde: Wait for ctl_start asynchronously on cmd mode panels" x
-- Revert "pinctrl: msm: Remove explicit barriers from mmio ops where unneeded" x
-- Misc. building changes
-
-
-x Credits go to sultanxda
+- drm: Reduce latency while processing atomic ioctls (thanks to sultanxda)
+- drm/msm/sde: Remove remaining PM QoS usage
+- Set zRAM disksize to 4GB according to Qualcomm's default value
