@@ -1,7 +1,12 @@
 fsociety tribute
 
-stable#1.97 - 08/07/2021
+stable#1.98 - 18/08/2021
 
-- drm: Reduce latency while processing atomic ioctls (thanks to sultanxda)
-- drm/msm/sde: Remove remaining PM QoS usage
-- Set zRAM disksize to 4GB according to Qualcomm's default value
+- Merge tag 'android-msm-4.14-s-beta-4' changes (Android 12 beta 4)
+- defconfig: Enable support for TTL spoofing (for those who could be interested in bypassing their carrier's hotspot throttle)
+- msm: ipa3: Use read memory barrier before reading events
+- Revert "drm: Reduce latency while processing atomic ioctls"
+- Revert "sched/core: Use SCHED_RR in place of SCHED_FIFO for all users"
+- fs: f2fs: Remove CAF tracing
+- fs: f2fs: Remove remaining CAF tracing code
+- drivers: msm: qcedev: demote additional dmesg spam to pr_debug
