@@ -2568,7 +2568,7 @@ static int max1720x_set_property(struct power_supply *psy,
 	pm_runtime_get_sync(chip->dev);
 	if (!chip->init_complete || !chip->resume_complete) {
 		pm_runtime_put_sync(chip->dev);
-		return -EAGAIN;
+		return IRQ_HANDLED;
 	}
 	pm_runtime_put_sync(chip->dev);
 
