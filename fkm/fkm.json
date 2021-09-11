@@ -1,11 +1,11 @@
 {
   "kernel": {
     "name": "fsociety tribute kernel",
-    "version": "stable #1.98",
-    "link": "https://sourceforge.net/projects/fsociety-tribute/files/pixel4a/fsociety-tribute-stable%231.98.zip/download",
+    "version": "stable #1.99",
+    "link": "https://sourceforge.net/projects/fsociety-tribute/files/pixel4a/fsociety-tribute-stable%231.99.zip/download",
     "changelog_url": "https://github.com/fsociety-tribute/pixel4a/raw/whiterose/fkm/changelog",
-    "date": "2021-08-18",
-    "sha1": "0ac3877487825f2e958770241ff7cc766946ba43"
+    "date": "2021-09-11",
+    "sha1": "ca629221e0aff538f3aa2a6a9f3473f13a2e185d"
   },
   "support": {
     "link": "https://t.me/fsociety_tribute_p4a"

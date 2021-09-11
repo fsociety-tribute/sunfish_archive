@@ -1,12 +1,33 @@
 fsociety tribute
 
-stable#1.98 - 18/08/2021
+stable#1.99 - 11/09/2021
 
-- Merge tag 'android-msm-4.14-s-beta-4' changes (Android 12 beta 4)
-- defconfig: Enable support for TTL spoofing (for those who could be interested in bypassing their carrier's hotspot throttle)
-- msm: ipa3: Use read memory barrier before reading events
-- Revert "drm: Reduce latency while processing atomic ioctls"
-- Revert "sched/core: Use SCHED_RR in place of SCHED_FIFO for all users"
-- fs: f2fs: Remove CAF tracing
-- fs: f2fs: Remove remaining CAF tracing code
-- drivers: msm: qcedev: demote additional dmesg spam to pr_debug
+- Merge 'android-s-beta-5' tag's changes (Android 12 beta 5) along with its security patches
+- Merge 'android-s-beta-3_r0.3' and 'android-s-beta-4_r0.3' tags' changes to the audio drivers
+- Merge 'android-s-beta-4_r0.3' tag's changes to the WiFi driver
+- Update AnyKernel3 to 20210910 version
+- makefile: remove some clang13 spam
+- Set zRAM's page-cluster to 0 per Google's recommendation, but it's to reduce the latency rather than saving memory. x
+- Set zRAM's disksize from 4GB to 2.7GB because the former was too high. A (450% x our device's RAM (6GB) calculation was preferred, and resulted in 2.7GB). xx
+- Revert "drm/msm/dsi-staging: Fix transposed panel_switch and panel_post_switch"
+- Revert "qcacmn: Enable EAPOL/DHCP message tracing in Wifi driver"
+- qcacmn: Fix suspicious string concatenation warning in fwlog
+- qcacld-3.0: Disable ATHDIAG procfs debug support for Adrastea
+- qcacld-3.0: default_defconfig: Unset some debugging configs
+- qcacld: reduce log spam
+- Revert "cpuidle: Change idle policy to always enter C1 first" for battery life purposes
+- cpuidle: lpm-levels: Only cancel the bias timer when it's used
+- treewide: Silence more verbose logging
+- Under-the-hood scheduler improvements
+- Memory management updates
+- Implement arter97's changes to the msm serial driver which fix a possible runtime power management malfunction
+- cpufreq: schedutil: Don't set next_freq to UINT_MAX.
+- cpufreq: schedutil: Don't skip freq update when limits change
+- msm: kgsl: Report correct GPU frequency in sysfs
+- iommu: msm: Rewrite to improve clarity and performance
+- ion: Rewrite to improve clarity and performance
+- f2fs: reduce timeout for uncongestion
+- f2fs: Set uncongestion timeout for 250 Hz timer frequency
+
+x More info here: https://source.android.com/devices/tech/perf/low-ram and https://github.com/ecdye/zram-config
+xx Calculation equation taken from: https://github.com/ecdye/zram-config
