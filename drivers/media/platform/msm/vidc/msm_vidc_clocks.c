@@ -1492,7 +1492,6 @@ static inline int msm_vidc_power_save_mode_enable(struct msm_vidc_inst *inst,
 	inst->flags = enable ?
 		inst->flags | VIDC_LOW_POWER :
 		inst->flags & ~VIDC_LOW_POWER;
-
 	dprintk(VIDC_PROF,
 			"Power Save Mode for inst: %pK Enable = %d\n",
 			inst, enable);

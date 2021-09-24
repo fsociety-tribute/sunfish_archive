@@ -1466,7 +1466,7 @@ static void _a6xx_do_crashdump(struct kgsl_device *device)
 {
 	unsigned int reg = 0;
 	unsigned int val;
- 	ktime_t timeout;
+	ktime_t timeout;
 
 	crash_dump_valid = false;
 
@@ -1509,7 +1509,7 @@ static void _a6xx_do_crashdump(struct kgsl_device *device)
 		usleep_range(100, 1000);
 	}
 
-    kgsl_regread(device, A6XX_CP_CRASH_DUMP_STATUS, &reg);
+	kgsl_regread(device, A6XX_CP_CRASH_DUMP_STATUS, &reg);
 
 	kgsl_regwrite(device, A6XX_CP_MISC_CNTL, 0);
 

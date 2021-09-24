@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -51,7 +51,6 @@ void cam_req_mgr_core_link_reset(struct cam_req_mgr_core_link *link)
 	link->initial_skip = true;
 	link->sof_timestamp = 0;
 	link->prev_sof_timestamp = 0;
-	link->num_sof_src = 0;
 }
 
 void cam_req_mgr_handle_core_shutdown(void)
@@ -1113,15 +1112,10 @@ static int __cam_req_mgr_check_sync_req_is_ready(
 		 * event of sync link is skipped, so we also need to
 		 * skip this SOF event.
 		 */
-		if (req_id > sync_req_id) {
-			CAM_INFO(CAM_CRM,
-				"Timing issue, the sof event delayed of link %x sof ts:0x%x sync link handle:0x%x sync sof:0x%x req:%lld sync reqid:%lld",
-				link->link_hdl,
-				link->sof_timestamp,
-				link->sync_link->link_hdl,
-				sync_link->sof_timestamp,
-				req_id,
-				sync_req_id);
+		if (req_id >= sync_req_id) {
+			CAM_DBG(CAM_CRM,
+				"Timing issue, the sof event of link %x is delayed",
+				link->link_hdl);
 			return -EAGAIN;
 		}
 	}
@@ -1885,7 +1879,6 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
 	struct cam_req_mgr_connected_device *device = NULL;
 	struct cam_req_mgr_flush_request     flush_req;
 	struct crm_task_payload             *task_data = NULL;
-	struct cam_req_mgr_req_tbl          *tbl = NULL;
 
 	if (!data || !priv) {
 		CAM_ERR(CAM_CRM, "input args NULL %pK %pK", data, priv);
@@ -1915,18 +1908,6 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
 			slot->sync_mode = CAM_REQ_MGR_SYNC_MODE_NO_SYNC;
 			slot->skip_idx = 1;
 			slot->status = CRM_SLOT_STATUS_NO_REQ;
-			tbl = link->req.l_tbl;
-
-			while (tbl != NULL) {
-				CAM_DBG(CAM_CRM, "pd: %d idx: %d state: %d",
-					tbl->pd, i, tbl->slot[i].state);
-				 tbl->slot[i].req_ready_map = 0;
-				 tbl->slot[i].dev_hdl = -1;
-				 tbl->slot[i].skip_next_frame = false;
-				 tbl->slot[i].state = CRM_REQ_STATE_EMPTY;
-				 tbl->slot[i].is_applied = false;
-				 tbl = tbl->next;
-			}
 		}
 		in_q->wr_idx = 0;
 		in_q->rd_idx = 0;
@@ -2506,13 +2487,10 @@ static int cam_req_mgr_cb_notify_trigger(
 	struct cam_req_mgr_trigger_notify *trigger_data)
 {
 	int                              rc = 0;
-	struct  crm_workq_task           *task = NULL;
-	struct  cam_req_mgr_core_link    *link = NULL;
-	struct  cam_req_mgr_trigger_notify   *notify_trigger;
-	struct  crm_task_payload         *task_data;
-	bool    send_sof = true;
-	int     i = 0;
-	int64_t sof_time_diff = 0;
+	struct crm_workq_task           *task = NULL;
+	struct cam_req_mgr_core_link    *link = NULL;
+	struct cam_req_mgr_trigger_notify   *notify_trigger;
+	struct crm_task_payload         *task_data;
 
 	if (!trigger_data) {
 		CAM_ERR(CAM_CRM, "sof_data is NULL");
@@ -2527,44 +2505,6 @@ static int cam_req_mgr_cb_notify_trigger(
 		rc = -EINVAL;
 		goto end;
 	}
-
-	for (i = 0; i < link->num_sof_src; i++) {
-		if (link->dev_sof_evt[i].dev_hdl == trigger_data->dev_hdl) {
-			if (link->dev_sof_evt[i].sof_done == false) {
-				link->dev_sof_evt[i].sof_done = true;
-				link->dev_sof_evt[i].frame_id =
-						trigger_data->frame_id;
-				link->dev_sof_evt[i].timestamp =
-					trigger_data->sof_timestamp_val;
-			} else
-				CAM_INFO(CAM_CRM, "Received Spurious SOF");
-		} else if (link->dev_sof_evt[i].sof_done == false) {
-			send_sof = false;
-		}
-	}
-
-	if (!send_sof)
-		return 0;
-	if (link->num_sof_src > 1) {
-		for (i = 0; i < (link->num_sof_src - 1); i++) {
-			if (link->dev_sof_evt[i].timestamp >=
-				link->dev_sof_evt[i+1].timestamp) {
-				sof_time_diff = link->dev_sof_evt[i].timestamp -
-					link->dev_sof_evt[i+1].timestamp;
-			} else {
-				sof_time_diff =
-					link->dev_sof_evt[i+1].timestamp -
-					link->dev_sof_evt[i].timestamp;
-			}
-			if ((link->dev_sof_evt[i].frame_id !=
-				link->dev_sof_evt[i+1].frame_id) ||
-				sof_time_diff > TIMESTAMP_DIFF_THRESHOLD)
-				return 0;
-		}
-	}
-
-	for (i = 0; i < link->num_sof_src; i++)
-		link->dev_sof_evt[i].sof_done = false;
 
 	spin_lock_bh(&link->link_state_spin_lock);
 	if (link->state < CAM_CRM_LINK_STATE_READY) {
@@ -2713,12 +2653,6 @@ static int __cam_req_mgr_setup_link_info(struct cam_req_mgr_core_link *link,
 				max_delay = dev->dev_info.p_delay;
 
 			subscribe_event |= (uint32_t)dev->dev_info.trigger;
-		}
-		if (dev->dev_info.dev_id == CAM_REQ_MGR_DEVICE_IFE) {
-			link->dev_sof_evt[link->num_sof_src].dev_hdl =
-				dev->dev_hdl;
-			link->dev_sof_evt[link->num_sof_src].sof_done = false;
-			link->num_sof_src++;
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -663,9 +663,9 @@ static int _sde_encoder_phys_cmd_poll_write_pointer_started(
 	}
 
 	if (phys_enc->has_intf_te)
-		ret = hw_intf->ops.get_vsync_info(hw_intf, &info, false);
+		ret = hw_intf->ops.get_vsync_info(hw_intf, &info);
 	else
-		ret = hw_pp->ops.get_vsync_info(hw_pp, &info, false);
+		ret = hw_pp->ops.get_vsync_info(hw_pp, &info);
 
 	if (ret)
 		return ret;
@@ -714,13 +714,13 @@ static bool _sde_encoder_phys_cmd_is_ongoing_pptx(
 		if (!hw_intf || !hw_intf->ops.get_vsync_info)
 			return false;
 
-		hw_intf->ops.get_vsync_info(hw_intf, &info, true);
+		hw_intf->ops.get_vsync_info(hw_intf, &info);
 	} else {
 		hw_pp = phys_enc->hw_pp;
 		if (!hw_pp || !hw_pp->ops.get_vsync_info)
 			return false;
 
-		hw_pp->ops.get_vsync_info(hw_pp, &info, true);
+		hw_pp->ops.get_vsync_info(hw_pp, &info);
 	}
 
 	SDE_EVT32(DRMID(phys_enc->parent),
@@ -1271,14 +1271,14 @@ static int sde_encoder_phys_cmd_get_write_line_count(
 		if (!hw_intf->ops.get_vsync_info)
 			return -EINVAL;
 
-		if (hw_intf->ops.get_vsync_info(hw_intf, &info, true))
+		if (hw_intf->ops.get_vsync_info(hw_intf, &info))
 			return -EINVAL;
 	} else {
 		hw_pp = phys_enc->hw_pp;
 		if (!hw_pp->ops.get_vsync_info)
 			return -EINVAL;
 
-		if (hw_pp->ops.get_vsync_info(hw_pp, &info, true))
+		if (hw_pp->ops.get_vsync_info(hw_pp, &info))
 			return -EINVAL;
 	}
 

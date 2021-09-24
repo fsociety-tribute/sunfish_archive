@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2803,7 +2803,7 @@ static int cam_ife_csid_release(void *hw_priv,
 		else if (res->res_id == CAM_IFE_PIX_PATH_RES_PPP)
 			csid_hw->ppp_path_config.measure_enabled = 0;
 		else if (res->res_id >= CAM_IFE_PIX_PATH_RES_RDI_0 &&
-			res->res_id <= CAM_IFE_PIX_PATH_RES_RDI_3)
+			 res->res_id <= CAM_IFE_PIX_PATH_RES_RDI_3)
 			csid_hw->rdi_path_config[res->res_id].measure_enabled
 				= 0;
 		break;
@@ -2835,9 +2835,6 @@ static int cam_ife_csid_reset_retain_sw_reg(
 		csid_reg->cmn_reg->csid_top_irq_clear_addr);
 	cam_io_w_mb(1, soc_info->reg_map[0].mem_base +
 		csid_reg->cmn_reg->csid_irq_cmd_addr);
-
-	cam_io_w_mb(0, soc_info->reg_map[0].mem_base +
-		csid_reg->cmn_reg->csid_top_irq_mask_addr);
 
 	cam_io_w_mb(csid_reg->cmn_reg->csid_rst_stb,
 		soc_info->reg_map[0].mem_base +

@@ -175,6 +175,8 @@ enum sde_enc_rc_states {
  * @te_source:		vsync source pin information
  * @ops:		Encoder ops from init function
  * @num_phys_encs:	Actual number of physical encoders contained.
+ * @phys_vid_encs:	Video physical encoders for panel mode switch.
+ * @phys_cmd_encs:	Command physical encoders for panel mode switch.
  * @phys_encs:		Container of physical encoders managed.
  * @cur_master:		Pointer to the current master in this mode. Optimization
  *			Only valid after enable. Cleared as disable.
@@ -241,6 +243,8 @@ struct sde_encoder_virt {
 
 	unsigned int num_phys_encs;
 	struct sde_encoder_phys *phys_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	struct sde_encoder_phys *phys_vid_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	struct sde_encoder_phys *phys_cmd_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
 	struct sde_encoder_phys *cur_master;
 	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
 	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
@@ -751,8 +755,16 @@ void sde_encoder_destroy(struct drm_encoder *drm_enc)
 	sde_rsc_client_destroy(sde_enc->rsc_client);
 
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
-		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
+		struct sde_encoder_phys *phys;
 
+		phys = sde_enc->phys_vid_encs[i];
+		if (phys && phys->ops.destroy) {
+			phys->ops.destroy(phys);
+			--sde_enc->num_phys_encs;
+			sde_enc->phys_encs[i] = NULL;
+		}
+
+		phys = sde_enc->phys_cmd_encs[i];
 		if (phys && phys->ops.destroy) {
 			phys->ops.destroy(phys);
 			--sde_enc->num_phys_encs;
@@ -1787,7 +1799,7 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 		return;
 	}
 
-	if (disp_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE) {
+	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_CMD_MODE)) {
 		if (is_dummy)
 			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0 -
 					sde_enc->te_source;
@@ -2187,14 +2199,15 @@ static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms;
 	struct sde_encoder_virt *sde_enc;
 	int rc;
-	bool is_cmd_mode, is_primary;
+	bool is_cmd_mode = false, is_primary;
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
 
-	is_cmd_mode = sde_enc->disp_info.capabilities &
-			MSM_DISPLAY_CAP_CMD_MODE;
+	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		is_cmd_mode = true;
+
 	is_primary = sde_enc->disp_info.is_primary;
 
 	SDE_DEBUG_ENC(sde_enc, "enable:%d\n", enable);
@@ -2228,6 +2241,7 @@ static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 
 		/* enable all the irq */
 		_sde_encoder_irq_control(drm_enc, true);
+
 	} else {
 		/* disable all the irq */
 		_sde_encoder_irq_control(drm_enc, false);
@@ -2333,9 +2347,8 @@ static int sde_encoder_resource_control(struct drm_encoder *drm_enc,
 	}
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	priv = drm_enc->dev->dev_private;
-	is_vid_mode = sde_enc->disp_info.capabilities &
-						MSM_DISPLAY_CAP_VID_MODE;
-
+	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE))
+		is_vid_mode = true;
 	/*
 	 * when idle_pc is not supported, process only KICKOFF, STOP and MODESET
 	 * events and return early for other events (ie wb display).
@@ -2411,6 +2424,7 @@ static int sde_encoder_resource_control(struct drm_encoder *drm_enc,
 
 		mutex_unlock(&sde_enc->rc_lock);
 		break;
+
 	case SDE_ENC_RC_EVENT_FRAME_DONE:
 		if (!sde_enc->crtc) {
 			SDE_ERROR("invalid crtc, sw_event:%u\n", sw_event);
@@ -2654,7 +2668,6 @@ static int sde_encoder_resource_control(struct drm_encoder *drm_enc,
 		break;
 
 	case SDE_ENC_RC_EVENT_ENTER_IDLE:
-
 		mutex_lock(&sde_enc->rc_lock);
 
 		if (sde_enc->rc_state != SDE_ENC_RC_STATE_ON) {
@@ -2779,7 +2792,37 @@ static int sde_encoder_resource_control(struct drm_encoder *drm_enc,
 			sde_enc->rc_state, SDE_EVTLOG_FUNC_EXIT);
 	return 0;
 }
+#if 0
+static void sde_encoder_virt_mode_switch(struct drm_encoder *drm_enc,
+	enum sde_intf_mode intf_mode, struct drm_display_mode *adj_mode)
+{
+	int i = 0;
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 
+	if (intf_mode == INTF_MODE_CMD)
+		sde_enc->disp_info.curr_panel_mode = MSM_DISPLAY_VIDEO_MODE;
+	else if (intf_mode == INTF_MODE_VIDEO)
+		sde_enc->disp_info.curr_panel_mode = MSM_DISPLAY_CMD_MODE;
+
+	_sde_encoder_resource_control_rsc_update(drm_enc, true);
+
+	if (intf_mode == INTF_MODE_CMD) {
+		for (i = 0; i < sde_enc->num_phys_encs; i++)
+			sde_enc->phys_encs[i] = sde_enc->phys_vid_encs[i];
+		SDE_DEBUG_ENC(sde_enc, "switch to video physical encoder\n");
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
+			msm_is_mode_seamless_poms(adj_mode),
+			SDE_EVTLOG_FUNC_CASE1);
+	} else if (intf_mode == INTF_MODE_VIDEO) {
+		for (i = 0; i < sde_enc->num_phys_encs; i++)
+			sde_enc->phys_encs[i] = sde_enc->phys_cmd_encs[i];
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
+			msm_is_mode_seamless_poms(adj_mode),
+			SDE_EVTLOG_FUNC_CASE2);
+		SDE_DEBUG_ENC(sde_enc, "switch to command physical encoder\n");
+	}
+}
+#endif
 static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 				      struct drm_display_mode *mode,
 				      struct drm_display_mode *adj_mode)
@@ -2791,6 +2834,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct drm_connector *conn = NULL, *conn_iter;
 	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
 	struct sde_rm_hw_request request_hw;
+	enum sde_intf_mode intf_mode;
 	bool is_cmd_mode = false;
 	int i = 0, ret;
 
@@ -2810,8 +2854,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
 	connector_list = &sde_kms->dev->mode_config.connector_list;
-	is_cmd_mode = sde_enc->disp_info.capabilities &
-					MSM_DISPLAY_CAP_CMD_MODE;
+	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		is_cmd_mode = true;
 
 	SDE_EVT32(DRMID(drm_enc));
 
@@ -2836,6 +2880,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		SDE_ERROR_ENC(sde_enc, "invalid connector state\n");
 		return;
 	}
+	intf_mode = sde_encoder_get_intf_mode(drm_enc);
 
 	/* release resources before seamless mode change */
 	if (msm_is_mode_seamless_dms(adj_mode) ||
@@ -3232,6 +3277,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 
 	/* register input handler if not already registered */
 	if (sde_enc->input_handler && !sde_enc->input_handler_registered &&
+		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE) &&
 			!msm_is_mode_seamless_dms(cur_mode) &&
 			!msm_is_mode_seamless_dyn_clk(cur_mode)) {
 		ret = _sde_encoder_input_handler_register(
@@ -3290,8 +3336,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 				phys->ops.enable(phys);
 		}
 
-		if (sde_enc->misr_enable && (sde_enc->disp_info.capabilities &
-		     MSM_DISPLAY_CAP_VID_MODE) && phys->ops.setup_misr)
+		if (sde_enc->misr_enable && phys->ops.setup_misr &&
+		(sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_VIDEO_MODE)))
 			phys->ops.setup_misr(phys, true,
 						sde_enc->misr_frame_count);
 	}
@@ -3938,8 +3984,8 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 		return;
 	}
 
-	is_vid_mode = sde_enc->disp_info.capabilities &
-					MSM_DISPLAY_CAP_VID_MODE;
+	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE))
+		is_vid_mode = true;
 	is_regdma_blocking = (is_vid_mode ||
 			_sde_encoder_is_autorefresh_enabled(sde_enc));
 
@@ -4147,7 +4193,7 @@ static void _sde_encoder_update_master(struct drm_encoder *drm_enc,
 	}
 }
 
-bool sde_encoder_check_mode(struct drm_encoder *drm_enc, u32 mode)
+bool sde_encoder_check_curr_mode(struct drm_encoder *drm_enc, u32 mode)
 {
 	struct sde_encoder_virt *sde_enc;
 	struct msm_display_info *disp_info;
@@ -4160,7 +4206,7 @@ bool sde_encoder_check_mode(struct drm_encoder *drm_enc, u32 mode)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	disp_info = &sde_enc->disp_info;
 
-	return (disp_info->capabilities & mode);
+	return (disp_info->curr_panel_mode == mode);
 }
 
 void sde_encoder_trigger_kickoff_pending(struct drm_encoder *drm_enc)
@@ -4182,7 +4228,7 @@ void sde_encoder_trigger_kickoff_pending(struct drm_encoder *drm_enc)
 		phys = sde_enc->phys_encs[i];
 
 		if (phys && phys->hw_ctl && (phys == sde_enc->cur_master) &&
-			(disp_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE)) {
+		(sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))) {
 			ctl = phys->hw_ctl;
 			if (ctl->ops.trigger_pending)
 				ctl->ops.trigger_pending(ctl);
@@ -5144,11 +5190,12 @@ static void sde_encoder_early_unregister(struct drm_encoder *encoder)
 }
 
 static int sde_encoder_virt_add_phys_encs(
-		u32 display_caps,
+		struct msm_display_info *disp_info,
 		struct sde_encoder_virt *sde_enc,
 		struct sde_enc_phys_init_params *params)
 {
 	struct sde_encoder_phys *enc = NULL;
+	u32 display_caps = disp_info->capabilities;
 
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
@@ -5172,8 +5219,7 @@ static int sde_encoder_virt_add_phys_encs(
 			return enc == 0 ? -EINVAL : PTR_ERR(enc);
 		}
 
-		sde_enc->phys_encs[sde_enc->num_phys_encs] = enc;
-		++sde_enc->num_phys_encs;
+		sde_enc->phys_vid_encs[sde_enc->num_phys_encs] = enc;
 	}
 
 	if (display_caps & MSM_DISPLAY_CAP_CMD_MODE) {
@@ -5184,10 +5230,16 @@ static int sde_encoder_virt_add_phys_encs(
 				PTR_ERR(enc));
 			return enc == 0 ? -EINVAL : PTR_ERR(enc);
 		}
-
-		sde_enc->phys_encs[sde_enc->num_phys_encs] = enc;
-		++sde_enc->num_phys_encs;
+		sde_enc->phys_cmd_encs[sde_enc->num_phys_encs] = enc;
 	}
+
+	if (disp_info->curr_panel_mode == MSM_DISPLAY_VIDEO_MODE)
+		sde_enc->phys_encs[sde_enc->num_phys_encs] =
+			sde_enc->phys_vid_encs[sde_enc->num_phys_encs];
+	else
+		sde_enc->phys_encs[sde_enc->num_phys_encs] =
+			sde_enc->phys_cmd_encs[sde_enc->num_phys_encs];
+	++sde_enc->num_phys_encs;
 
 	return 0;
 }
@@ -5354,7 +5406,7 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 						&phys_params);
 			else
 				ret = sde_encoder_virt_add_phys_encs(
-						disp_info->capabilities,
+						disp_info,
 						sde_enc,
 						&phys_params);
 			if (ret)
@@ -5364,11 +5416,17 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 	}
 
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
-		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
+		struct sde_encoder_phys *vid_phys = sde_enc->phys_vid_encs[i];
+		struct sde_encoder_phys *cmd_phys = sde_enc->phys_cmd_encs[i];
 
-		if (phys) {
-			atomic_set(&phys->vsync_cnt, 0);
-			atomic_set(&phys->underrun_cnt, 0);
+		if (vid_phys) {
+			atomic_set(&vid_phys->vsync_cnt, 0);
+			atomic_set(&vid_phys->underrun_cnt, 0);
+		}
+
+		if (cmd_phys) {
+			atomic_set(&cmd_phys->vsync_cnt, 0);
+			atomic_set(&cmd_phys->underrun_cnt, 0);
 		}
 	}
 	mutex_unlock(&sde_enc->enc_lock);

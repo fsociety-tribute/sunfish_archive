@@ -581,6 +581,17 @@ static struct npu_network *alloc_network(struct npu_host_ctx *ctx,
 	WARN_ON(!mutex_is_locked(&ctx->lock));
 
 	for (i = 0; i < MAX_LOADED_NETWORK; i++) {
+		if ((network->id != 0) &&
+			(network->client != client)) {
+			pr_err("NPU is used by other client now\n");
+			return NULL;
+		}
+
+		network++;
+	}
+
+	network = ctx->networks;
+	for (i = 0; i < MAX_LOADED_NETWORK; i++) {
 		if (network->id == 0)
 			break;
 
@@ -1643,7 +1654,7 @@ err_deinit_fw:
 int32_t npu_host_unload_network(struct npu_client *client,
 			struct msm_npu_unload_network_ioctl *unload)
 {
-	int ret = 0, retry_cnt = 1;
+	int ret = 0;
 	struct npu_device *npu_dev = client->npu_dev;
 	struct ipc_cmd_unload_pkt unload_packet;
 	struct npu_network *network;
@@ -1679,7 +1690,6 @@ int32_t npu_host_unload_network(struct npu_client *client,
 	unload_packet.header.flags = 0;
 	unload_packet.network_hdl = (uint32_t)network->network_hdl;
 
-retry:
 	/* NPU_IPC_CMD_UNLOAD will go onto IPC_QUEUE_APPS_EXEC */
 	reinit_completion(&network->cmd_done);
 	ret = npu_send_network_cmd(npu_dev, network, &unload_packet, false);
@@ -1688,15 +1698,13 @@ retry:
 		pr_err("NPU_IPC_CMD_UNLOAD sent failed: %d\n", ret);
 		/*
 		 * If another command is running on this network,
-		 * retry after 500ms.
+		 * don't free_network now.
 		 */
-		if ((ret == -EBUSY) && (retry_cnt > 0)) {
+		if (ret == -EBUSY) {
 			pr_err("Network is running, retry later\n");
+			network_put(network);
 			mutex_unlock(&host_ctx->lock);
-			retry_cnt--;
-			msleep(500);
-			mutex_lock(&host_ctx->lock);
-			goto retry;
+			return ret;
 		}
 		goto free_network;
 	}

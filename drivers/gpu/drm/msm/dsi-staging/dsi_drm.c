@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -85,6 +85,8 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_DMS_FPS;
 	if (drm_mode->type & DRM_MODE_TYPE_PREFERRED)
 		dsi_mode->preferred = true;
+	if (msm_is_mode_seamless_poms(drm_mode))
+		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS;
 	if (msm_is_mode_seamless_dyn_clk(drm_mode))
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_DYN_CLK;
 
@@ -131,6 +133,8 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DMS_FPS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_VRR)
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_VRR;
+	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS)
+		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_POMS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DYN_CLK;
 
@@ -247,8 +251,12 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 		pr_err("[%d] DSI display post enabled failed, rc=%d\n",
 		       c_bridge->id, rc);
 
-	if (c_bridge->display && c_bridge->display->drm_conn)
+	if (c_bridge->display && c_bridge->display->drm_conn) {
 		sde_connector_helper_bridge_post_enable(c_bridge->display->drm_conn);
+		if (c_bridge->dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)
+			sde_connector_schedule_status_work(display->drm_conn,
+				true);
+	}
 }
 
 static void dsi_bridge_disable(struct drm_bridge *bridge)
@@ -256,6 +264,7 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 	int rc = 0;
 	struct dsi_display *display;
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
+	int private_flags;
 
 	if (!bridge) {
 		pr_err("Invalid params\n");
@@ -263,8 +272,14 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 	}
 	display = c_bridge->display;
 
-	if (display && display->drm_conn)
+	private_flags =
+		bridge->encoder->crtc->state->adjusted_mode.private_flags;
+
+	if (display && display->drm_conn) {
+		display->poms_pending =
+			private_flags & MSM_MODE_FLAG_SEAMLESS_POMS;
 		sde_connector_helper_bridge_disable(display->drm_conn);
+	}
 
 	rc = dsi_display_pre_disable(c_bridge->display);
 	if (rc) {
@@ -409,9 +424,17 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 				clone_mode = true;
 		}
 
+		/* No panel mode switch when drm pipeline is changing */
+		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
+			(crtc_state->enable ==
+				crtc_state->crtc->state->enable))
+			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_POMS;
+
 		/* No DMS/VRR when drm pipeline is changing */
 		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) &&
 			(!crtc_state->active_changed ||
 			 display->is_cont_splash_enabled))
